@@ -1,3 +1,47 @@
+# Lumon MDR Console — Entrega del equipo
+
+| Integrante | Código |
+|:--|:--|
+| NOMBRE 1 | CODIGO |
+| NOMBRE 2 | CODIGO |
+| NOMBRE 3 | CODIGO |
+
+- **URL de producción:** https://PONER-URL.vercel.app
+- **TEAM_CODE:** TEAM-0XX
+
+## Cómo ejecutar
+
+```bash
+npm install
+cp .env.example .env.local   # completar VITE_API_BASE_URL y VITE_WS_BASE_URL
+npm run dev                  # http://localhost:5173
+npm run build                # build de producción en dist/
+```
+
+## Despliegue (Vercel)
+
+- Se importa el repositorio en Vercel (framework Vite). Variables: `VITE_API_BASE_URL`, `VITE_WS_BASE_URL`.
+- `X-Lumon-Build` se inyecta en el build desde `VERCEL_GIT_COMMIT_SHA` (7 caracteres), ver `vite.config.ts`.
+- `vercel.json`: rewrite SPA (todas las rutas → `index.html`, salvo `/.well-known/` y `/assets/`) y cabeceras
+  `Content-Security-Policy`, `X-Content-Type-Options: nosniff` y `Referrer-Policy`.
+- Dominio verificado con `POST /integrations/deploy/challenge` → token en
+  `public/.well-known/lumon-verification.txt` → `POST /integrations/deploy/verify` (desde la página `/estado`).
+
+## Storage
+
+Pendiente (Cloudinary con upload preset unsigned, solo `webp`, carpeta `lumon/<TEAM_CODE>/`).
+
+## Decisiones técnicas
+
+- Access token solo en memoria; refresh token en `localStorage` (de un solo uso).
+- Refresh coordinado: una sola promesa por pestaña + Web Locks entre pestañas (cada pestaña lee el refresh
+  token más reciente dentro del lock, así nunca se reutiliza). Logout y revocación se avisan con BroadcastChannel.
+- Grilla virtualizada a mano (posiciones absolutas, máx. 2 500 celdas), caché de bloques con requests únicas,
+  cancelación con AbortController, pausa global ante 429 y backoff ante 503.
+- Refinamiento idempotente: un `Idempotency-Key` (UUID) por intención, reutilizado en reintentos.
+
+---
+
 # Hackathon Frontend: Lumon Industries — Macrodata Refinement
 
 <div align="center">

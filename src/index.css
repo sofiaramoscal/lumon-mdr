@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+:root { color-scheme: dark; }
+body { @apply bg-slate-950 text-slate-100; }
+
+/* Celdas que dan miedo: tiemblan según su tremor (variable --amp) */
+@keyframes tremble {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(calc(var(--amp) * 1px), calc(var(--amp) * -1px)); }
+  50% { transform: translate(calc(var(--amp) * -1px), calc(var(--amp) * 1px)); }
+  75% { transform: translate(calc(var(--amp) * 1px), calc(var(--amp) * 1px)); }
+}
+.scary { animation: tremble var(--dur, 400ms) infinite linear; font-weight: 700; color: #fde68a; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sin movimiento: se distinguen por color, subrayado y negrita */
+  .scary { animation: none; text-decoration: underline; text-decoration-thickness: 2px; }
+}
