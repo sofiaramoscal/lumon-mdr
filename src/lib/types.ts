@@ -84,6 +84,7 @@ export function progressPercent(p: unknown): number | null {
   if (typeof p === 'number') return p <= 1 ? Math.round(p * 100) : Math.round(p)
   if (p && typeof p === 'object') {
     const o = p as Record<string, unknown>
+    if (typeof o.overall === 'number') return Math.round((o.overall as number) * 100)
     for (const k of ['percent', 'percentage', 'pct']) if (typeof o[k] === 'number') return Math.round(o[k] as number)
     if (typeof o.refined === 'number' && typeof o.total === 'number' && o.total > 0)
       return Math.round(((o.refined as number) / (o.total as number)) * 100)

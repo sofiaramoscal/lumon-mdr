@@ -123,7 +123,7 @@ export class TileStore {
       const wait = this.pausedUntil - Date.now()
       if (wait > 0) await sleep(wait, signal)
       try {
-        const { data } = await apiRaw<Tile>(`/files/${this.fileId}/tiles/${tr}/${tc}`, { signal })
+        const { data } = await apiRaw<Tile>(`/files/${this.fileId}/tiles/${tr}/${tc}`, { signal, retry: false })
         const decoded: DecodedTile = {
           originRow: data.originRow,
           originCol: data.originCol,

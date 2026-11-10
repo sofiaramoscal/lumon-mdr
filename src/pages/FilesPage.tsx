@@ -5,9 +5,9 @@ import { api, errorText } from '../lib/http'
 import { progressPercent, toPage, type FileSummary, type Page } from '../lib/types'
 import { useDebounce } from '../lib/useDebounce'
 
-const STATUSES = ['', 'PENDING', 'IN_PROGRESS', 'COMPLETED']
-const SORTS = ['name,asc', 'name,desc', 'createdAt,desc', 'createdAt,asc', 'progress,desc', 'progress,asc']
-const SIZES = [10, 20, 50]
+const STATUSES = ['', 'ACTIVE', 'COMPLETE']
+const SORTS = ['updatedAt,desc', 'name,asc', 'progress,desc']
+const SIZES = [10, 25, 50]
 
 /** Lee y valida la URL: una URL inválida cae a valores por defecto, nunca rompe la vista. */
 function readParams(sp: URLSearchParams) {

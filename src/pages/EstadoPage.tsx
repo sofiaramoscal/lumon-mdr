@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthContext'
-import { api, API_BASE, BUILD_SHA, errorText } from '../lib/http'
+import { api, API_BASE, ApiError, BUILD_SHA, errorText } from '../lib/http'
 
 /** /estado: build desplegado, salud de la API, integraciones, clearance y revisión automática. */
 export default function EstadoPage() {
@@ -70,6 +70,7 @@ export default function EstadoPage() {
       <section className="space-y-2">
         <h2 className="text-lg font-semibold">Integraciones</h2>
         <Json value={integrations} />
+        {can('team:manage') && <RosterForm />}
         {can('team:manage') && <DeployVerify run={run} busy={busy} />}
         {can('team:manage') && <Chaos run={run} busy={busy} />}
       </section>
@@ -106,14 +107,24 @@ function DeployVerify({ run, busy }: { run: Runner; busy: string | null }) {
 }
 
 function Chaos({ run, busy }: { run: Runner; busy: string | null }) {
+  const [level, setLevel] = useState<number | null>(null)
   return (
-    <div className="p-3 rounded border border-slate-700 flex gap-2 items-center">
+    <div className="p-3 rounded border border-slate-700 flex flex-wrap gap-2 items-center">
       <span className="font-semibold">Modo caos:</span>
       {[0, 1, 2].map((l) => (
-        <button key={l} disabled={busy !== null} onClick={() => void run('chaos', () => api('/workspace/chaos', { method: 'PUT', body: { level: l } }))} className="px-3 py-1 rounded bg-slate-700">
+        <button
+          key={l}
+          disabled={busy !== null}
+          aria-pressed={level === l}
+          onClick={() => void run('chaos', () => api('/workspace/chaos', { method: 'PUT', body: { level: l } }), () => setLevel(l))}
+          className={`px-3 py-1 rounded ${level === l ? 'bg-emerald-700' : 'bg-slate-700'}`}
+        >
           {l}
         </button>
       ))}
+      <span role="status" className="text-sm text-slate-300">
+        {busy === 'chaos' ? 'Aplicando…' : level !== null ? `Caos activado en nivel ${level}` : ''}
+      </span>
     </div>
   )
 }
@@ -130,4 +141,82 @@ function Info({ label, value }: { label: string; value: string }) {
 function Json({ value }: { value: unknown }) {
   // Se muestra como texto (nunca se interpreta HTML de los datos)
   return <pre className="text-xs bg-slate-900 p-3 rounded overflow-auto max-h-80 whitespace-pre-wrap">{value === null ? '—' : JSON.stringify(value, null, 2)}</pre>
+}
+
+interface RosterMember { name: string; code: string }
+interface Roster { members: RosterMember[]; complete: boolean; locked: boolean }
+
+/** Inscripción de los tres integrantes (PUT /team/roster). */
+function RosterForm() {
+  const [members, setMembers] = useState<RosterMember[]>([
+    { name: '', code: '' },
+    { name: '', code: '' },
+    { name: '', code: '' },
+  ])
+  const [roster, setRoster] = useState<Roster | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    api<Roster>('/team/roster')
+      .then((r) => {
+        setRoster(r)
+        if (r.members.length) {
+          const filled = [...r.members]
+          while (filled.length < 3) filled.push({ name: '', code: '' })
+          setMembers(filled.slice(0, 3))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setMsg(null)
+    setFieldErrors({})
+    try {
+      const r = await api<Roster>('/team/roster', { method: 'PUT', body: { members } })
+      setRoster(r)
+      setMsg('Roster guardado ✓')
+    } catch (err) {
+      setMsg(errorText(err))
+      if (err instanceof ApiError && err.details && typeof err.details.fields === 'object' && err.details.fields) {
+        setFieldErrors(err.details.fields as Record<string, string>)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const set = (i: number, k: keyof RosterMember, v: string) =>
+    setMembers((ms) => ms.map((m, j) => (j === i ? { ...m, [k]: v } : m)))
+
+  return (
+    <form onSubmit={save} className="p-3 rounded border border-slate-700 space-y-2">
+      <h3 className="font-semibold">Roster (los tres integrantes)</h3>
+      {roster && (
+        <p className="text-sm text-slate-300">
+          {roster.complete ? 'Roster completo' : 'Roster incompleto'}
+          {roster.locked ? ' · bloqueado (ya entró a un sorteo)' : ''}
+        </p>
+      )}
+      {members.map((m, i) => (
+        <div key={i} className="flex flex-wrap gap-2">
+          <label className="sr-only" htmlFor={`rn${i}`}>Nombre del integrante {i + 1}</label>
+          <input id={`rn${i}`} placeholder="Nombre y apellido" value={m.name} disabled={roster?.locked} onChange={(e) => set(i, 'name', e.target.value)} className="px-2 py-1 rounded bg-slate-800 border border-slate-600 flex-1 min-w-40" />
+          <label className="sr-only" htmlFor={`rc${i}`}>Código UTEC del integrante {i + 1}</label>
+          <input id={`rc${i}`} placeholder="Código UTEC" value={m.code} disabled={roster?.locked} onChange={(e) => set(i, 'code', e.target.value)} className="px-2 py-1 rounded bg-slate-800 border border-slate-600 w-36" />
+        </div>
+      ))}
+      {Object.entries(fieldErrors).map(([k, v]) => (
+        <p key={k} className="text-sm text-red-300">{k}: {v}</p>
+      ))}
+      <button disabled={saving || roster?.locked} className="px-3 py-1.5 rounded bg-emerald-700 disabled:opacity-50">
+        {saving ? 'Guardando…' : 'Guardar roster'}
+      </button>
+      {msg && <p role="status" className="text-sm">{msg}</p>}
+    </form>
+  )
 }

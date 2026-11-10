@@ -141,6 +141,8 @@ export interface RequestOptions {
   headers?: Record<string, string>
   signal?: AbortSignal
   auth?: boolean
+  /** false: no reintentar automáticamente (los bloques manejan su propio 429/503) */
+  retry?: boolean
 }
 
 export interface ApiResponse<T> {
@@ -168,7 +170,26 @@ export async function apiRaw<T>(path: string, opts: RequestOptions = {}): Promis
     }
   }
 
-  let res = await send(accessToken)
+  // Lecturas (GET): ante corte de red, 503 o 429 se reintenta con espera creciente / Retry-After.
+  const isGet = (opts.method ?? 'GET') === 'GET' && opts.retry !== false
+  let res: Response
+  for (let attempt = 0; ; attempt++) {
+    try {
+      res = await send(accessToken)
+    } catch (e) {
+      if (isGet && e instanceof NetworkError && attempt < 4) {
+        await sleep(400 * 2 ** attempt, opts.signal)
+        continue
+      }
+      throw e
+    }
+    if (isGet && (res.status === 503 || res.status === 429) && attempt < 4) {
+      const ra = Number(res.headers.get('Retry-After') ?? '')
+      await sleep(Number.isFinite(ra) && ra > 0 ? ra * 1000 : 400 * 2 ** attempt, opts.signal)
+      continue
+    }
+    break
+  }
   if (res.status === 401 && opts.auth !== false) {
     const err = await parseError(res)
     if (err.code !== 'TOKEN_EXPIRED') {

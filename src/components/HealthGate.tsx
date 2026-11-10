@@ -12,10 +12,11 @@ export function HealthGate({ children }: { children: ReactNode }) {
     window.clearTimeout(timer.current)
     try {
       const ctrl = new AbortController()
-      const t = window.setTimeout(() => ctrl.abort(), 8000)
+      const t = window.setTimeout(() => ctrl.abort(), 15000)
       const res = await fetch(`${API_BASE}/meta/health`, { headers: { 'X-Lumon-Build': BUILD_SHA }, signal: ctrl.signal })
       window.clearTimeout(t)
-      if (!res.ok) throw new Error(String(res.status))
+      // Cualquier respuesta HTTP significa que Lumon responde (un 503 del modo caos no bloquea la app).
+      void res
       setOk(true)
     } catch {
       setOk(false)

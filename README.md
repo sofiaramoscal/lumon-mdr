@@ -2,12 +2,12 @@
 
 | Integrante | Código |
 |:--|:--|
-| NOMBRE 1 | CODIGO |
-| NOMBRE 2 | CODIGO |
-| NOMBRE 3 | CODIGO |
+| Sofia Ramos | 202510158 |
+| Anthony Cadenas | 202510031 |
+| Yamile Morales | 202510671 |
 
-- **URL de producción:** https://PONER-URL.vercel.app
-- **TEAM_CODE:** TEAM-0XX
+- **URL de producción:** https://lumon-mdr-one.vercel.app
+- **TEAM_CODE:** TEAM-043
 
 ## Cómo ejecutar
 

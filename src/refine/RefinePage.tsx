@@ -81,7 +81,7 @@ function RefineGrid({ file, rules }: { file: FileDetail; rules: Rules }) {
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
   const [progress, setProgress] = useState<unknown>(file.progress ?? null)
-  const [completed, setCompleted] = useState(file.status === 'COMPLETED' || progressPercent(file.progress) === 100)
+  const [completed, setCompleted] = useState(file.status === 'COMPLETE' || progressPercent(file.progress) === 100)
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null)
   const [overBin, setOverBin] = useState<string | null>(null)
 
@@ -202,10 +202,10 @@ function RefineGrid({ file, rules }: { file: FileDetail; rules: Rules }) {
               headers: { 'Idempotency-Key': selection.idemKey },
             })
             store.markRefined(selection.cells, bin[0])
-            const p = res.data.progress ?? res.data.file ?? res.data
-            setProgress(p)
-            const pct = progressPercent(p)
-            if (pct === 100 || res.data.status === 'COMPLETED') setCompleted(true)
+            // La respuesta trae el progreso actualizado del archivo: { file: { progress, status, ... } }
+            const f = (res.data.file ?? {}) as { progress?: unknown; status?: string }
+            setProgress(f.progress ?? null)
+            if (f.status === 'COMPLETE' || progressPercent(f.progress) === 100) setCompleted(true)
             setMsg({ kind: 'ok', text: `Grupo de ${selection.cells.length} celdas llevado a ${bin}.` })
             setSelection(null)
             return

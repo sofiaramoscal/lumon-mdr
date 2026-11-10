@@ -1,11 +1,20 @@
 {
-  "teamCode": "TEAM-000",
-  "teamName": "Nombre de la cuadrilla",
-  "deployUrl": "https://",
-  "storageProvider": "SUPABASE | CLOUDINARY",
+  "teamCode": "TEAM-043",
+  "teamName": "imparables",
+  "deployUrl": "https://lumon-mdr-one.vercel.app",
+  "storageProvider": "CLOUDINARY",
   "integrantes": [
-    { "nombre": "Nombre Apellido", "codigo": "CODIGO UTEC" },
-    { "nombre": "Nombre Apellido", "codigo": "CODIGO UTEC" },
-    { "nombre": "Nombre Apellido", "codigo": "CODIGO UTEC" }
+    {
+      "nombre": "Sofia Ramos",
+      "codigo": "202510158"
+    },
+    {
+      "nombre": "Anthony Cadenas",
+      "codigo": "202510031"
+    },
+    {
+      "nombre": "Yamile Morales",
+      "codigo": "202510671"
+    }
   ]
 }
